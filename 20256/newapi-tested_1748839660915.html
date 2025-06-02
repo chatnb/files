@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Jacob - 大模型API服务平台</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 动态背景 */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(1deg); }
+        }
+
+        /* 导航栏 */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 0;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: white;
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* 主要内容区域 */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 120px 20px 60px;
+        }
+
+        /* 头部区域 */
+        .hero-section {
+            text-align: center;
+            margin-bottom: 80px;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 107, 107, 0.4);
+        }
+
+        /* API卡片网格 */
+        .api-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 60px;
+        }
+
+        /* API卡片样式 */
+        .api-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .api-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .api-card:hover::before {
+            left: 100%;
+        }
+
+        .api-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* 修改图标容器样式 */
+        .api-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 25px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* 官方图标样式 */
+        .api-icon img {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            object-fit: contain;
+            filter: brightness(1.1) contrast(1.1);
+        }
+
+        .api-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .api-description {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .api-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+
+        .feature-tag {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .api-button {
+            background: linear-gradient(45deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 12px 25px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .api-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* 各API的特色配色 */
+        .claude .api-icon { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
+        .gemini .api-icon { background: linear-gradient(135deg, #4285f4 0%, #34a853 100%); }
+        .deepseek .api-icon { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
+        .grok .api-icon { background: linear-gradient(135deg, #000000 0%, #434343 100%); }
+        .gpt .api-icon { background: linear-gradient(135deg, #10a37f 0%, #1a7f64 100%); }
+        .qwen .api-icon { background: linear-gradient(135deg, #ff6a00 0%, #ee5a24 100%); }
+        .douban .api-icon { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); }
+        .mj .api-icon { background: linear-gradient(135deg, #000000 0%, #4a4a4a 100%); }
+
+        /* 动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .api-card {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .api-card:nth-child(1) { animation-delay: 0.1s; }
+        .api-card:nth-child(2) { animation-delay: 0.2s; }
+        .api-card:nth-child(3) { animation-delay: 0.3s; }
+        .api-card:nth-child(4) { animation-delay: 0.4s; }
+        .api-card:nth-child(5) { animation-delay: 0.5s; }
+        .api-card:nth-child(6) { animation-delay: 0.6s; }
+        .api-card:nth-child(7) { animation-delay: 0.7s; }
+        .api-card:nth-child(8) { animation-delay: 0.8s; }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+            
+            .api-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+
+            .docs-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .docs-title {
+                font-size: 2rem;
+            }
+
+            .contact-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .contact-title {
+                font-size: 2rem;
+            }
+
+            .qr-code {
+                width: 120px;
+                height: 120px;
+            }
+        }
+
+        /* 页脚 */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: rgba(255, 255, 255, 0.6);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 80px;
+        }
+
+        /* 图标加载失败时的备用样式 */
+        .api-icon img {
+            transition: all 0.3s ease;
+        }
+
+        .api-icon img:hover {
+            transform: scale(1.1);
+        }
+
+        /* 文档板块样式 */
+        .docs-section {
+            margin-top: 80px;
+            padding: 60px 0;
+            text-align: center;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .docs-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .docs-subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 50px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* 修改文档网格布局 - 强制换行显示 */
+        .docs-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-top: 40px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .doc-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: left;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .doc-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .doc-card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .doc-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .doc-icon i {
+            color: white;
+            font-size: 24px;
+        }
+
+        .doc-card-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: white;
+            margin: 0;
+        }
+
+        .doc-description {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .doc-link {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(45deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+            color: white;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            margin-bottom: 10px;
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .doc-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .doc-link i {
+            margin-left: 10px;
+        }
+
+        /* 联系我们板块样式 */
+        .contact-section {
+            margin-top: 80px;
+            padding: 60px 0;
+            text-align: center;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .contact-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .contact-subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 50px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* 修改联系我们网格布局 - 强制换行显示 */
+        .contact-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-top: 40px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* 二维码行 */
+        .qr-row {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .contact-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            flex: 1;
+            min-width: 280px;
+            max-width: 350px;
+        }
+
+        .contact-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .qr-code-container {
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        /* 二维码悬停放大效果 */
+        .qr-code {
+            width: 150px;
+            height: 150px;
+            border-radius: 15px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            object-fit: cover;
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 二维码悬停放大动画效果 */
+        .qr-code:hover {
+            transform: scale(1.3);
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+
+        /* 二维码点击放大效果 */
+        .qr-code.enlarged {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(2);
+            z-index: 1000;
+            border-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 遮罩层 */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .contact-type {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .contact-info {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: left;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .contact-info:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .contact-info-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .contact-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .contact-icon i {
+            color: white;
+            font-size: 24px;
+        }
+
+        .contact-info-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: white;
+            margin: 0;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .contact-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .contact-item i {
+            color: #ff6b6b;
+            margin-right: 12px;
+            font-size: 18px;
+            width: 20px;
+        }
+
+        .contact-item-label {
+            color: rgba(255, 255, 255, 0.7);
+            margin-right: 10px;
+            font-weight: 500;
+            min-width: 60px;
+        }
+
+        .contact-item-value {
+            color: white;
+            font-weight: 500;
+        }
+
+        .service-time {
+            background: linear-gradient(45deg, rgba(255, 107, 107, 0.2), rgba(238, 90, 36, 0.2));
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .service-time-title {
+            color: #ff6b6b;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .service-time-value {
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        /* 移动端响应式调整 */
+        @media (max-width: 768px) {
+            .qr-row {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .contact-card {
+                max-width: 100%;
+            }
+
+            .qr-code {
+                width: 120px;
+                height: 120px;
+            }
+
+            .qr-code:hover {
+                transform: scale(1.2);
+            }
+
+            .qr-code.enlarged {
+                transform: translate(-50%, -50%) scale(1.8);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <!-- 遮罩层 -->
+    <div class="overlay" id="overlay"></div>
+    
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#" class="logo">AI API Hub</a>
+            <div class="nav-links">
+                <a href="#apis">API服务</a>
+                <a href="#pricing">API状态监控</a>
+                <a href="#docs">API文档</a>
+                <a href="#contact">联系我们</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <div class="main-container">
+        <!-- 头部区域 -->
+        <section class="hero-section">
+            <h1 class="hero-title">Jacob API服务平台</h1>
+            <p class="hero-subtitle">集成市面上顶尖的AI模型，为您的应用提供强大的人工智能能力。高效接入，连接无限未来。</p>
+            <a href="#apis" class="cta-button">开始探索</a>
+        </section>
+
+        <!-- API服务网格 -->
+        <section id="apis" class="api-grid">
+            <!-- Claude API -->
+            <div class="api-card claude">
+                <div class="api-icon">
+                    <img src="https://proxy.xjai.cc/github_static/chatnb/files/main/20255/claude_1748627780261.png" 
+                         alt="Claude" 
+                         onerror="this.src='https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/anthropic/anthropic-original.svg'">
+                </div>
+                <h3 class="api-title">Claude</h3>
+                <p class="api-description">Anthropic开发的先进AI助手，擅长复杂推理、创意写作和安全对话。</p>
+                <div class="api-features">
+                    <span class="feature-tag">安全可靠</span>
+                    <span class="feature-tag">长文本</span>
+                    <span class="feature-tag">推理能力</span>
+                </div>
+                <a href="https://fast.api-store.store/token" class="api-button">立即接入</a>
+            </div>
+
+            <!-- Gemini API -->
+            <div class="api-card gemini">
+                <div class="api-icon">
+                    <img src="https://proxy.xjai.cc/github_static/chatnb/files/main/20255/GEMINI_1748627777025.png" 
+                         alt="Gemini"
+                         onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/8/8a/Google_Gemini_logo.svg'">
+                </div>
+                <h3 class="api-title">Gemini</h3>
+                <p class="api-description">Google最新多模态AI模型，支持文本、图像、音频等多种输入格式。</p>
+                <div class="api-features">
+                    <span class="feature-tag">多模态</span>
+                    <span class="feature-tag">高性能</span>
+                    <span class="feature-tag">实时处理</span>
+                </div>
+                <a href="https://fast.api-store.store/token" class="api-button">立即接入</a>
+            </div>
+
+            <!-- DeepSeek API -->
+            <div class="api-card deepseek">
+                <div class="api-icon">
+                    <img src="https://proxy.xjai.cc/github_static/chatnb/files/main/20255/deepseek_1748627781628.png" 
+                         alt="DeepSeek"
+                         onerror="this.src='https://avatars.githubusercontent.com/u/130101978?s=200&v=4'">
+                </div>
+                <h3 class="api-title">DeepSeek</h3>
+                <p class="api-description">专注于深度学习和代码生成的AI模型，编程助手的最佳选择。</p>
+                <div class="api-features">
+                    <span class="feature-tag">代码生成</span>
+                    <span class="feature-tag">技术问答</span>
+                    <span class="feature-tag">高效率</span>
+                </div>
+                <a href="https://fast.api-store.store/token" class="api-button">立即接入</a>
+            </div>
+
+            <!-- Grok API -->
+            <div class="api-card grok">
+                <div class="api-icon">
+                    <img src="https://proxy.xjai.cc/github_static/chatnb/files/main/20255/grok_1748627778888.png" 
+                         alt="Grok"
+                         onerror="this.src='https://pbs.twimg.com/profile_images/1683325380441128960/yRsRRjGO_400x400.jpg'">
+                </div>
+                <h3 class="api-title">Grok</h3>
+                <p class="api-description">xAI开发的幽默风趣AI助手，具有独特的个性和实时信息获取能力。</p>
+                <div class="api-features">
+                    <span class="feature-tag">个性化</span>
+                    <span class="feature-tag">实时数据</span>
+                    <span class="feature-tag">创新思维</span>
+                </div>
+                <a href="https://fast.api-store.store/token" class="api-button">立即接入</a>
+            </div>
+
+            <!-- GPT API -->
+            <div class="api-card gpt">
+                <div class="api-icon">
+                    <img src="https://proxy.xjai.cc/github_static/chatnb/files/main/20255/gpt_1748628072519.png" 
+                         alt="GPT"
+                         onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg'">
+                </div>
+                <h3 class="api-title">GPT</h3>
+                <p class="api-description">OpenAI的经典语言模型，在对话、创作、分析等领域表现卓越。</p>
+                <div class="api-features">
+                    <span class="feature-tag">通用性强</span>
+                    <span class="feature-tag">创意写作</span>
+                    <span class="feature-tag">逻辑分析</span>
+                </div>
+                <a href="https://fast.api-store.store/token" class="api-button">立即接入</a>
+            </div>
+
+            <!-- Qwen API -->
+            <div class="api-card qwen">
+                <div class="api-icon">
+                    <img src="https://proxy.xjai.cc/github_static/chatnb/files/main/20255/qwen_1748628088976.png" 
+                         alt="Qwen"
+                         onerror="this.src='https://img.alicdn.com/imgextra/i1/O1CN01KQGlzv1aU7NTBqchW_!!6000000003329-2-tps-500-500.png'">
+                </div>
+                <h3 class="api-title">Qwen</h3>
+                <p class="api-description">阿里云通义千问，中文理解能力出众，支持多种专业领域应用。</p>
+                <div class="api-features">
+                    <span class="feature-tag">中文优化</span>
+                    <span class="feature-tag">专业领域</span>
+                    <span class="feature-tag">本土化</span>
+                </div>
+                <a href="https://fast.api-store.store/token" class="api-button">立即接入</a>
+            </div>
+
+            <!-- 豆包 API -->
+            <div class="api-card douban">
+                <div class="api-icon">
+                    <img src="https://proxy.xjai.cc/github_static/chatnb/files/main/20255/doubao_1748627774791.png" 
+                         alt="豆包"
+                         onerror="this.src='https://lf-flow-web-cdn.doubao.com/obj/flow-doubao/doubao/web/logo-icon.png'">
+                </div>
+                <h3 class="api-title">豆包</h3>
+                <p class="api-description">字节跳动开发的AI助手，在内容创作和智能问答方面表现优异。</p>
+                <div class="api-features">
+                    <span class="feature-tag">内容创作</span>
+                    <span class="feature-tag">智能问答</span>
+                    <span class="feature-tag">快速响应</span>
+                </div>
+                <a href="https://fast.api-store.store/token" class="api-button">立即接入</a>
+            </div>
+
+            <!-- Midjourney API -->
+            <div class="api-card mj">
+                <div class="api-icon">
+                    <img src="https://proxy.xjai.cc/github_static/chatnb/files/main/20255/mj_1748627772665.png" 
+                         alt="Midjourney"
+                         onerror="this.src='https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/midjourney.png'">
+                </div>
+                <h3 class="api-title">Midjourney</h3>
+                <p class="api-description">顶级AI图像生成工具，创造令人惊叹的艺术作品和视觉内容。</p>
+                <div class="api-features">
+                    <span class="feature-tag">图像生成</span>
+                    <span class="feature-tag">艺术创作</span>
+                    <span class="feature-tag">高质量</span>
+                </div>
+                <a href="https://fast.api-store.store/token" class="api-button">立即接入</a>
+            </div>
+        </section>
+    </div>
+    
+    <!-- 文档板块 -->
+    <section id="docs" class="docs-section">
+        <h2 class="docs-title">API文档中心</h2>
+        <p class="docs-subtitle">完整的API文档和开发指南，助您快速上手各种AI模型接口</p>
+        
+        <div class="docs-grid">
+            <!-- OpenAI官方文档 -->
+            <div class="doc-card">
+                <div class="doc-card-header">
+                    <div class="doc-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <h3 class="doc-card-title">OpenAI官方API文档</h3>
+                </div>
+                <p class="doc-description">
+                    OpenAI官方提供的完整API参考文档，包含GPT系列模型的详细使用说明、参数配置和示例代码。
+                </p>
+                <a href="https://platform.openai.com/docs/api-reference" target="_blank" class="doc-link">
+                    访问官方文档
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+            </div>
+
+            <!-- AI模型API中文文档 -->
+            <div class="doc-card">
+                <div class="doc-card-header">
+                    <div class="doc-icon">
+                        <i class="fas fa-language"></i>
+                    </div>
+                    <h3 class="doc-card-title">AI模型API中文文档</h3>
+                </div>
+                <p class="doc-description">
+                    专为中文开发者准备的AI模型API文档，提供详细的中文说明、使用教程和最佳实践指南。
+                </p>
+                <a href="https://apiai.apifox.cn" target="_blank" class="doc-link">
+                    查看中文文档
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 联系我们板块 -->
+    <section id="contact" class="contact-section">
+        <h2 class="contact-title">联系我们</h2>
+        <p class="contact-subtitle">多种联系方式，随时为您提供专业的AI API服务支持！</p>
+        
+        <div class="contact-grid">
+            <!-- 二维码行 -->
+            <div class="qr-row">
+                <!-- 微信二维码 -->
+                <div class="contact-card">
+                    <div class="qr-code-container">
+                        <img src="https://proxy.xjai.cc/github_static/chatnb/files/main/20256/fff7b6186650f64676da8b2b8f65ac8_1748837798452.png" 
+                             alt="微信二维码" 
+                             class="qr-code"
+                             onclick="enlargeQR(this)"
+                             onerror="this.src='https://via.placeholder.com/150x150/667eea/ffffff?text=微信二维码'">
+                    </div>
+                    <div class="contact-type">微信扫码联系</div>
+                </div>
+
+                <!-- QQ二维码 -->
+                <div class="contact-card">
+                    <div class="qr-code-container">
+                        <img src="https://proxy.xjai.cc/github_static/chatnb/files/main/20253/QQ_1742715967087.png" 
+                             alt="QQ二维码" 
+                             class="qr-code"
+                             onclick="enlargeQR(this)"
+                             onerror="this.src='https://via.placeholder.com/150x150/667eea/ffffff?text=QQ二维码'">
+                    </div>
+                    <div class="contact-type">QQ扫码联系</div>
+                </div>
+            </div>
+
+            <!-- 联系信息 -->
+            <div class="contact-info">
+                <div class="contact-info-header">
+                    <div class="contact-icon">
+                        <i class="fas fa-address-book"></i>
+                    </div>
+                    <h3 class="contact-info-title">手动添加联系方式</h3>
+                </div>
+                
+                <div class="contact-item">
+                    <i class="fab fa-weixin"></i>
+                    <span class="contact-item-label">微信号:</span>
+                    <span class="contact-item-value">Roseai0103</span>
+                </div>
+                
+                <div class="contact-item">
+                    <i class="fab fa-qq"></i>
+                    <span class="contact-item-label">QQ:</span>
+                    <span class="contact-item-value">2425954101</span>
+                </div>
+                
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <span class="contact-item-label">邮箱:</span>
+                    <span class="contact-item-value">2425954101@qq.com</span>
+                </div>
+                
+                <div class="service-time">
+                    <div class="service-time-title">
+                        <i class="fas fa-clock"></i> 服务时间
+                    </div>
+                    <div class="service-time-value">7✖24小时</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <p>&copy; Jacob API. 让AI赋能每一个创新想法。</p>
+    </footer>
+
+    <script>
+        // 导航栏滚动效果
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.style.background = 'rgba(255, 255, 255, 0.15)';
+                navbar.style.backdropFilter = 'blur(25px)';
+            } else {
+                navbar.style.background = 'rgba(255, 255, 255, 0.1)';
+                navbar.style.backdropFilter = 'blur(20px)';
+            }
+        });
+
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // 卡片悬停效果增强
+        document.querySelectorAll('.api-card, .doc-card, .contact-card, .contact-info').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-15px) scale(1.03)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+
+        // 二维码点击放大功能
+        function enlargeQR(img) {
+            const overlay = document.getElementById('overlay');
+            
+            // 添加放大类
+            img.classList.add('enlarged');
+            overlay.classList.add('active');
+            
+            // 点击遮罩层或二维码恢复原状
+            function closeEnlarged() {
+                img.classList.remove('enlarged');
+                overlay.classList.remove('active');
+                overlay.removeEventListener('click', closeEnlarged);
+                img.removeEventListener('click', closeEnlarged);
+            }
+            
+            // 延迟添加点击事件，避免立即触发
+            setTimeout(() => {
+                overlay.addEventListener('click', closeEnlarged);
+                img.addEventListener('click', closeEnlarged);
+            }, 100);
+        }
+
+        // 二维码加载错误处理
+        document.querySelectorAll('.qr-code').forEach(img => {
+            img.addEventListener('error', function() {
+                console.log('二维码加载失败，使用备用图片:', this.alt);
+            });
+        });
+
+        // 图标加载错误处理
+        document.querySelectorAll('.api-icon img').forEach(img => {
+            img.addEventListener('error', function() {
+                console.log('图标加载失败，使用备用图标:', this.alt);
+            });
+        });
+
+        // ESC键关闭放大的二维码
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const enlargedQR = document.querySelector('.qr-code.enlarged');
+                const overlay = document.getElementById('overlay');
+                if (enlargedQR) {
+                    enlargedQR.classList.remove('enlarged');
+                    overlay.classList.remove('active');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
